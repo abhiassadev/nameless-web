@@ -1,0 +1,11 @@
+.toggle-button-clicked > span:nth-child(1) {
+	transform: rotate(45deg);
+}
+
+.toggle-button-clicked > span:nth-child(2) {
+	transform: scale(0);
+}
+
+.toggle-button-clicked > span:nth-child(3) {
+	transform: rotate(-45deg);
+}
