@@ -7,7 +7,7 @@ toggleButton.addEventListener('click', () => {
     toggleMenu.classList.toggle('flex');
 });
 
-fetch('http://localhost:5000/api-anggota')
+fetch('https://nameless-api.vercel.app/members-api')
 .then(response => response.json())
 .then(data => {
     var output = '';

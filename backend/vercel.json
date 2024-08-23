@@ -1,0 +1,39 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "index.js",
+            "use": "@vercel/node"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/members-api",
+            "dest": "index.js"
+        },
+{
+"src": "/gallery-api",
+"dest": "index.js"
+},
+        {
+            "src": "/members",
+            "dest": "index.js"
+        },
+        {
+            "src": "/add",
+            "dest": "index.js"
+        },
+        {
+            "src": "/delete/(.*)",
+            "dest": "index.js"
+        },
+{
+"src": "/gallery",
+"dest": "index.js"
+},
+        {
+            "src": "/(.*)",
+            "dest": "/public/$1"
+        }
+    ]
+}

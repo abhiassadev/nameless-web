@@ -1,49 +1,120 @@
 const express = require('express');
-const fs = require('fs');
+const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
 const path = require('path');
-const cors = require('cors');
 const app = express();
-const port = 5000;
+const port = 1000;
+const url = "mongodb+srv://abhiassaproject:abhiassa@abhiassacluster.vdvvi.mongodb.net/namelessDB?retryWrites=true&w=majority&appName=abhiassaCluster"
 
-app.use(cors());
-app.use(express.static('public'));
+const User = require('./models/user.js');
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+mongoose.connect(url)
+.then(() => console.log("Connected..."))
+.catch(err => console.log("Error", err))
+
+cloudinary.config({
+    cloud_name: "dly5mdfrl",
+    api_key: "686751942755659",
+    api_secret: "z9kBrIFtSQrwV4Xp3kvn5nGjZq8"
+});
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+app.use(express.urlencoded({ extended: true, }));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.render('index', {
+        title: "Nameless Management System"
+    });
 });
 
-app.get('/api-anggota', (req, res) => {
-    const data = fs.readFileSync('./database/anggota.json', 'utf-8');
-    const dataParse = JSON.parse(data);
-
-    res.send(dataParse)
-    res.end();
+app.get('/members-api', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (err) {
+        res.status(500).send("Server error...");
+    }
 });
 
-app.get('/api-galeri', (req, res) => {
-    const data = fs.readFileSync('./database/galeri.json', 'utf-8');
-    const dataParse = JSON.parse(data);
-
-    res.send(dataParse)
-    res.end();
+app.get('/members', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.render('members', {
+            title: "NMS | Members",
+            data: users,
+        });
+    } catch {
+        console.log('File not found');
+    }
 });
 
-app.get('/api-jadwal-rapat', (req, res) => {
-    const data = fs.readFileSync('./database/jadwalRapat.json', 'utf-8');
-    const dataParse = JSON.parse(data);
+app.post('/add', upload.single('photo'), async (req, res) => {
+    try {
+        const { name, position, social} = req.body;
 
-    res.send(dataParse)
-    res.end();
+        if (!name || !position || !social || !req.file) {
+            return res.status(400).send('Tidak ada data yang ditambahkan')
+        };
+
+        const result = await new Promise ((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                { resource_type: 'image' },
+                (error, result) => {
+                    if (error) {
+                        return reject(error)
+                    }
+                    resolve(result);
+                }
+            ).end(req.file.buffer);
+        });
+
+        const newUser = new User({
+            name,
+            position,
+            social,
+            photo: result.secure_url,
+        });
+
+        await newUser.save();
+
+        res.redirect('/members');
+    } catch (err) {
+        return console.error('Error:', err);
+        res.status(500).send('Error:', err);
+    }
 });
 
-app.get('/api-pengumuman', (req, res) => {
-    const data = fs.readFileSync('./database/pengumuman.json', 'utf-8');
-    const dataParse = JSON.parse(data);
+app.get('/delete/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id);
 
-    res.send(dataParse)
-    res.end();
-});
+        await User.findByIdAndDelete(id);
+        res.redirect('/members');
+    } catch (err) {
+        console.error(err)
+    }
+})
+
+app.get('/gallery-api', (req,res) => {
+    res.send('Sedang diproses ngab....');
+})
+
+app.get('/gallery', (req,res) => {
+    res.send('Sedang diproses ngab....');
+})
 
 app.listen(port, () => {
     console.log(`Server running on port http://localhost:${port}`);
 });
+
+module.exports = app;
